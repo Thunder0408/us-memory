@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Us Memory ♡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Delete confirmation modal -->
+  <div id="confirm-modal" class="confirm-modal" style="display:none">
+    <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <p class="confirm-message" id="confirm-message">Delete this photo/video?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="confirm-no">Cancel</button>
+        <button class="btn btn-danger" id="confirm-yes">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox hidden">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <button class="lightbox-prev" onclick="lightboxNav(-1)">‹</button>
+    <div class="lightbox-content" id="lightbox-content"></div>
+    <button class="lightbox-next" onclick="lightboxNav(1)">›</button>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
