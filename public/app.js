@@ -312,11 +312,11 @@ async function renderDay(dateStr) {
 function renderHearts(rating, editable, author, dateStr) {
   let html = '';
   for (let i = 1; i <= 10; i++) {
-    const filled = i <= rating;
+    const filledClass = i <= rating ? ' filled' : '';
     if (editable) {
-      html += `<span class="heart" onclick="rateDay('${author}','${dateStr}',${i})" onmouseover="previewHearts('${author}',${i})" onmouseout="resetHearts('${author}','${dateStr}',${rating})">${filled ? '♥' : '♡'}</span>`;
+      html += `<span class="heart${filledClass}" onclick="rateDay('${author}','${dateStr}',${i})" onmouseover="previewHearts('${author}',${i})" onmouseout="resetHearts('${author}','${dateStr}',${rating})">♥</span>`;
     } else {
-      html += `<span class="heart readonly">${filled ? '♥' : '♡'}</span>`;
+      html += `<span class="heart readonly${filledClass}">♥</span>`;
     }
   }
   return html;
@@ -325,13 +325,13 @@ function renderHearts(rating, editable, author, dateStr) {
 function previewHearts(author, n) {
   const row = document.getElementById(`hearts-${author}`);
   if (!row) return;
-  row.querySelectorAll('.heart').forEach((h, i) => h.textContent = i < n ? '♥' : '♡');
+  row.querySelectorAll('.heart').forEach((h, i) => h.classList.toggle('filled', i < n));
 }
 
 function resetHearts(author, dateStr, current) {
   const row = document.getElementById(`hearts-${author}`);
   if (!row) return;
-  row.querySelectorAll('.heart').forEach((h, i) => h.textContent = i < current ? '♥' : '♡');
+  row.querySelectorAll('.heart').forEach((h, i) => h.classList.toggle('filled', i < current));
 }
 
 async function rateDay(author, dateStr, rating) {

@@ -441,7 +441,12 @@ body {
   transition: transform 0.12s ease;
   user-select: none;
   line-height: 1;
+  display: inline-block;
+  width: 1.6rem;
+  text-align: center;
+  color: var(--border);
 }
+.heart.filled { color: var(--primary); }
 .heart:hover { transform: scale(1.25); }
 .heart.readonly { cursor: default; }
 .heart.readonly:hover { transform: none; }
