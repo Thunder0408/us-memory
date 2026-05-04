@@ -1,8 +1,8 @@
 @echo off
-title Our Memory - Tunnel
+title Us Memory - Tunnel
 echo.
 echo  ===========================================
-echo   Our Memory - Permanent Link
+echo   Us Memory - Permanent Link
 echo  ===========================================
 echo.
 echo  Starting Tailscale Funnel...
@@ -10,9 +10,12 @@ echo  Starting Tailscale Funnel...
 echo.
 echo  Your permanent link (send this to BF):
 echo.
-echo    https://capybarachihuahuawithmonkeyandpiglet.tail01df1e.ts.net
+echo    https://usmemory.tail01df1e.ts.net
 echo.
-echo  This link never changes!
+echo  NOTE: If the link above doesn't work, your Tailscale device name
+echo  may still need to be renamed at: https://login.tailscale.com/admin/machines
+echo.
+echo  This link never changes once the device is renamed!
 echo  ===========================================
 echo.
 pause
