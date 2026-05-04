@@ -281,7 +281,7 @@ async function renderDay(dateStr) {
         ${(() => {
           const scores = Object.values(ratingMap).filter(r => r > 0);
           if (!scores.length) return '';
-          const avg = scores.reduce((a, b) => a + b, 0) / 2;
+          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
           const display = Number.isInteger(avg) ? avg : avg.toFixed(1);
           return `<div class="total-score">
             <span class="total-score-label">Today's Score</span>
@@ -351,6 +351,7 @@ async function autoSaveNote(author) {
   if (!ta) return;
   const dateStr = location.hash.split('/')[1];
   if (!dateStr) return;
+  if (!ta.value.trim()) return;
   await api('POST', '/api/notes', { date: dateStr, content: ta.value });
   const saved = document.getElementById(`note-saved-${author}`);
   if (saved) { saved.classList.add('show'); setTimeout(() => saved.classList.remove('show'), 2000); }
@@ -370,7 +371,7 @@ function uploadWithProgress(form, onProgress) {
     xhr.open('POST', '/api/media');
     xhr.withCredentials = true;
     xhr.upload.onprogress = e => {
-      if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+      if (e.lengthComputable) onProgress(Math.min(100, Math.round(e.loaded / e.total * 100)));
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
@@ -403,10 +404,10 @@ async function uploadMedia(input, dateStr) {
       showUploadStatus(statusId, 'success', `✓ ${count} file${count > 1 ? 's' : ''} uploaded successfully!`);
       setTimeout(() => renderGallery(), 1500);
     }
+    input.value = '';
   } catch (e) {
     showUploadStatus(statusId, 'error', `✗ Upload failed: ${e.message}`);
   }
-  input.value = '';
 }
 
 async function deleteMedia(id, dateStr) {

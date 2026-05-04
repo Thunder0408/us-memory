@@ -52,7 +52,7 @@ app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true }
 }));
 
 const MIME_TO_EXT = {
@@ -67,7 +67,8 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, UPLOADS_DIR),
     filename: (req, file, cb) => {
-      const ext = MIME_TO_EXT[file.mimetype] || path.extname(file.originalname) || '';
+      const ext = MIME_TO_EXT[file.mimetype];
+      if (!ext) return cb(new Error(`Unsupported file type: ${file.mimetype}`));
       cb(null, `${uuidv4()}${ext}`);
     }
   }),
@@ -77,6 +78,10 @@ const upload = multer({
 function requireAuth(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
   next();
+}
+
+function isValidDate(str) {
+  return typeof str === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(str);
 }
 
 // --- Auth ---
@@ -97,13 +102,15 @@ app.get('/api/me', (req, res) => {
 });
 
 // --- Notes ---
-app.get('/api/notes/:date', (req, res) => {
+app.get('/api/notes/:date', requireAuth, (req, res) => {
+  if (!isValidDate(req.params.date)) return res.status(400).json({ error: 'Invalid date' });
   const rows = db.prepare('SELECT * FROM notes WHERE date = ?').all(req.params.date);
   res.json(rows);
 });
 
 app.post('/api/notes', requireAuth, (req, res) => {
   const { date, content } = req.body;
+  if (!isValidDate(date)) return res.status(400).json({ error: 'Invalid date' });
   const author = req.session.user;
   db.prepare(`
     INSERT INTO notes (date, content, author) VALUES (?, ?, ?)
@@ -113,13 +120,17 @@ app.post('/api/notes', requireAuth, (req, res) => {
 });
 
 // --- Ratings ---
-app.get('/api/ratings/:date', (req, res) => {
+app.get('/api/ratings/:date', requireAuth, (req, res) => {
+  if (!isValidDate(req.params.date)) return res.status(400).json({ error: 'Invalid date' });
   const rows = db.prepare('SELECT * FROM ratings WHERE date = ?').all(req.params.date);
   res.json(rows);
 });
 
 app.post('/api/ratings', requireAuth, (req, res) => {
-  const { date, rating } = req.body;
+  const { date } = req.body;
+  const rating = parseInt(req.body.rating, 10);
+  if (!isValidDate(date)) return res.status(400).json({ error: 'Invalid date' });
+  if (!Number.isInteger(rating) || rating < 1 || rating > 10) return res.status(400).json({ error: 'Rating must be 1–10' });
   const author = req.session.user;
   db.prepare(`
     INSERT INTO ratings (date, rating, author) VALUES (?, ?, ?)
@@ -129,12 +140,13 @@ app.post('/api/ratings', requireAuth, (req, res) => {
 });
 
 // --- Media ---
-app.get('/api/media/:date', (req, res) => {
+app.get('/api/media/:date', requireAuth, (req, res) => {
+  if (!isValidDate(req.params.date)) return res.status(400).json({ error: 'Invalid date' });
   const rows = db.prepare('SELECT * FROM media WHERE date = ? ORDER BY created_at DESC').all(req.params.date);
   res.json(rows);
 });
 
-app.get('/api/gallery', (req, res) => {
+app.get('/api/gallery', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT * FROM media ORDER BY created_at DESC').all();
   res.json(rows);
 });
@@ -143,13 +155,21 @@ app.post('/api/media', requireAuth, upload.array('files', 30), (req, res) => {
   const { date } = req.body;
   const author = req.session.user;
   const insert = db.prepare('INSERT INTO media (date, filename, original_name, mimetype, author) VALUES (?, ?, ?, ?, ?)');
-  req.files.forEach(f => insert.run(date || null, f.filename, f.originalname, f.mimetype, author));
-  res.json({ ok: true, count: req.files.length });
+  try {
+    db.transaction(() => {
+      req.files.forEach(f => insert.run(date || null, f.filename, f.originalname, f.mimetype, author));
+    })();
+    res.json({ ok: true, count: req.files.length });
+  } catch (e) {
+    req.files.forEach(f => { try { fs.unlinkSync(path.join(UPLOADS_DIR, f.filename)); } catch {} });
+    res.status(500).json({ error: 'Upload failed' });
+  }
 });
 
 app.delete('/api/media/:id', requireAuth, (req, res) => {
   const row = db.prepare('SELECT * FROM media WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Not found' });
+  if (row.author !== req.session.user) return res.status(403).json({ error: 'Not your file' });
   const filePath = path.join(UPLOADS_DIR, row.filename);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   db.prepare('DELETE FROM media WHERE id = ?').run(req.params.id);
@@ -157,7 +177,8 @@ app.delete('/api/media/:id', requireAuth, (req, res) => {
 });
 
 // --- Calendar summary ---
-app.get('/api/calendar/:year/:month', (req, res) => {
+app.get('/api/calendar/:year/:month', requireAuth, (req, res) => {
+  if (!/^\d{4}$/.test(req.params.year) || !/^\d{1,2}$/.test(req.params.month)) return res.status(400).json({ error: 'Invalid year/month' });
   const prefix = `${req.params.year}-${req.params.month.padStart(2, '0')}`;
   const noteEntries = db.prepare(`SELECT date, author FROM notes WHERE date LIKE ? AND content != ''`).all(`${prefix}%`);
   const ratings = db.prepare('SELECT date, author, rating FROM ratings WHERE date LIKE ?').all(`${prefix}%`);
