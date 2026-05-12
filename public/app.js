@@ -666,6 +666,92 @@ function formatDateLabel(dateStr) {
   return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// ===== MUSIC ACTIONS =====
+async function addToQueue(youtubeUrl) {
+  const videoId = extractYouTubeId(youtubeUrl);
+  if (!videoId) {
+    alert('Invalid YouTube URL. Please paste a full YouTube link (e.g. https://www.youtube.com/watch?v=...)');
+    return;
+  }
+  let title = youtubeUrl;
+  try {
+    const r = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+    );
+    if (r.ok) {
+      const data = await r.json();
+      title = data.title;
+    }
+  } catch (_) {}
+  await api('POST', '/api/music/queue', { youtube_url: youtubeUrl, title });
+  showAddInput = false;
+  await pollMusicState();
+}
+
+async function togglePlayPause() {
+  if (!musicState) return;
+  if (musicState.is_playing) {
+    await api('POST', '/api/music/pause');
+  } else {
+    await api('POST', '/api/music/play', {});
+  }
+  await pollMusicState();
+}
+
+async function restartSong() {
+  if (!musicState || !musicState.current_id) return;
+  await api('POST', '/api/music/play', { id: musicState.current_id });
+  await pollMusicState();
+}
+
+async function skipSong() {
+  await api('POST', '/api/music/skip');
+  await pollMusicState();
+}
+
+async function removeSong(id) {
+  await api('DELETE', `/api/music/queue/${id}`);
+  await pollMusicState();
+}
+
+async function toggleRepeat() {
+  localRepeat = !localRepeat;
+  renderMusicWidget();
+  await api('POST', '/api/music/repeat');
+}
+
+function toggleWidgetExpanded() {
+  widgetExpanded = !widgetExpanded;
+  renderMusicWidget();
+}
+
+function toggleAddInput() {
+  showAddInput = !showAddInput;
+  renderMusicWidget();
+  if (showAddInput) {
+    setTimeout(() => {
+      const inp = document.getElementById('mw-url-input');
+      if (inp) inp.focus();
+    }, 50);
+  }
+}
+
+function submitAddUrl() {
+  const inp = document.getElementById('mw-url-input');
+  if (!inp || !inp.value.trim()) return;
+  addToQueue(inp.value.trim());
+}
+
+function handleVolumeClick(e) {
+  if (!ytPlayer || !ytPlayerReady) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const volume = Math.round(ratio * 100);
+  ytPlayer.setVolume(volume);
+  const fill = e.currentTarget.querySelector('.mw-vol-fill');
+  if (fill) fill.style.width = `${volume}%`;
+}
+
 // ===== INIT =====
 window.addEventListener('hashchange', renderRoute);
 
