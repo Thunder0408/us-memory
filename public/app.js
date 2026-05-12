@@ -921,6 +921,24 @@ function renderMusicWidget() {
     </div>`;
 }
 
+function initMusicWidget() {
+  renderMusicWidget();
+  pollMusicState();
+  musicPollTimer = setInterval(pollMusicState, 5000);
+  progressTimer = setInterval(() => {
+    if (!widgetExpanded || !musicState || !musicState.is_playing || !ytPlayerReady) return;
+    const fill   = document.querySelector('.mw-prog-fill');
+    const timeEl = document.querySelector('.mw-current-time');
+    if (!fill || !timeEl || !ytPlayer) return;
+    const current  = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+    const duration = ytPlayer.getDuration    ? ytPlayer.getDuration()    : 0;
+    if (duration > 0) {
+      fill.style.width    = `${(current / duration) * 100}%`;
+      timeEl.textContent  = formatTime(current);
+    }
+  }, 1000);
+}
+
 // ===== INIT =====
 window.addEventListener('hashchange', renderRoute);
 
@@ -928,4 +946,7 @@ window.addEventListener('hashchange', renderRoute);
   const me = await api('GET', '/api/me').catch(() => ({ user: null }));
   currentUser = me.user;
   renderRoute();
+  if (me.user) {
+    initMusicWidget();
+  }
 })();
