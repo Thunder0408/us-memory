@@ -805,3 +805,363 @@ body {
   .lightbox-prev { left: 4px; width: 36px; height: 36px; font-size: 1.4rem; }
   .lightbox-next { right: 4px; width: 36px; height: 36px; font-size: 1.4rem; }
 }
+
+/* ── Music Widget ──────────────────────────────────────────── */
+#music-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Collapsed pill ────────────────────────────────────────────── */
+.mw-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 14px 8px 10px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  min-width: 200px;
+  max-width: 290px;
+}
+
+.mw-disc {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--primary) 0%, #c45a70 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.mw-disc.spinning {
+  animation: mw-spin 4s linear infinite;
+}
+
+@keyframes mw-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.mw-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.mw-song-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mw-meta {
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+.mw-empty-label {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.mw-play-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mw-expand-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+/* Expanded card ─────────────────────────────────────────────── */
+.mw-expanded {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(232,114,138,0.18);
+  width: 240px;
+  overflow: hidden;
+}
+
+.mw-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #c45a70 100%);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mw-header-thumb {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.mw-header-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.mw-header-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mw-header-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.75);
+}
+
+.mw-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.mw-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.mw-ctrl-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+}
+
+.mw-ctrl-btn.repeat-off {
+  opacity: 0.3;
+}
+
+.mw-big-play-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.mw-progress {
+  padding: 0 14px 8px;
+}
+
+.mw-prog-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 6px 0 4px;
+}
+
+.mw-prog-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.5s linear;
+}
+
+.mw-prog-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-light);
+}
+
+.mw-queue {
+  border-bottom: 1.5px solid var(--border);
+}
+
+.mw-queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mw-add-btn {
+  background: var(--primary-light);
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.mw-queue-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.mw-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 11px;
+}
+
+.mw-queue-item.active {
+  background: var(--primary-light);
+}
+
+.mw-q-icon {
+  font-size: 10px;
+  color: var(--primary);
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.mw-q-num {
+  font-size: 10px;
+  color: var(--text-light);
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.mw-q-title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mw-q-del {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--text-light);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.mw-add-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  border-top: 1.5px solid var(--border);
+}
+
+.mw-url-input {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.mw-url-input:focus {
+  border-color: var(--primary);
+}
+
+.mw-url-submit {
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mw-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+}
+
+.mw-vol-icon {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.mw-vol-track {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.mw-vol-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  width: 70%;
+  pointer-events: none;
+}
