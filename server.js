@@ -220,6 +220,45 @@ app.get('/api/music/state', requireAuth, (req, res) => {
   res.json({ queue, current_id, started_at, paused_at, is_playing, repeat });
 });
 
+app.post('/api/music/queue', requireAuth, (req, res) => {
+  const { youtube_url, title } = req.body;
+  if (!youtube_url || !title) {
+    return res.status(400).json({ error: 'youtube_url and title are required' });
+  }
+  const id = uuidv4();
+  const maxRow = db.prepare('SELECT MAX(position) AS m FROM music_queue').get();
+  const position = (maxRow.m != null ? maxRow.m : -1) + 1;
+  db.prepare(
+    'INSERT INTO music_queue (id, youtube_url, title, added_by, position, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(id, youtube_url, title, req.session.user, position, Date.now());
+  // Auto-play if nothing is currently set
+  if (!getMusicVal('current_id')) {
+    setMusicVal('current_id', id);
+    setMusicVal('started_at', Date.now());
+    setMusicVal('is_playing', 'true');
+    setMusicVal('paused_at', '');
+  }
+  res.json({ ok: true, id });
+});
+
+app.delete('/api/music/queue/:id', requireAuth, (req, res) => {
+  const { id } = req.params;
+  db.prepare('DELETE FROM music_queue WHERE id = ?').run(id);
+  if (getMusicVal('current_id') === id) {
+    const next = db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
+    if (next) {
+      setMusicVal('current_id', next.id);
+      setMusicVal('started_at', Date.now());
+      setMusicVal('paused_at', '');
+      setMusicVal('is_playing', 'true');
+    } else {
+      setMusicVal('current_id', '');
+      setMusicVal('is_playing', 'false');
+    }
+  }
+  res.json({ ok: true });
+});
+
 app.listen(PORT, () => {
   console.log(`\n💕 Our Memory is running!`);
   console.log(`   Local:  http://localhost:${PORT}`);
