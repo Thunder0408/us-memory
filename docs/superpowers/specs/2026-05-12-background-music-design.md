@@ -22,6 +22,7 @@ Thunder and BF want to play shared background music while browsing their couple 
 - Two visual states: **collapsed** (pill with song name + play/pause) and **expanded** (full controls + queue list)
 - Music persists across hash-based page navigation (widget lives outside the routed view)
 - Approximate sync: a new client calculates how far into the song to seek based on `started_at` timestamp
+- Either user can toggle **repeat-one**: current song loops indefinitely until manually skipped
 
 ---
 
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS music_state (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
--- Keys: current_id, started_at, paused_at, is_playing
+-- Keys: current_id, started_at, paused_at, is_playing, repeat
 ```
 
 `music_state` is a simple key-value store. `started_at` is a Unix timestamp (ms) of when the current song started from position 0. When paused, `paused_at` stores the elapsed ms. On resume, `started_at` is recalculated as `now - paused_at` so position is preserved.
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS music_state (
 | `POST` | `/api/music/play` | Play a specific song by queue ID (sets `started_at = now`) |
 | `POST` | `/api/music/pause` | Pause, recording elapsed position |
 | `POST` | `/api/music/skip` | Advance to next song in queue |
+| `POST` | `/api/music/repeat` | Toggle repeat-one on/off (shared state) |
 
 All routes require `requireAuth`.
 
@@ -72,7 +74,8 @@ All routes require `requireAuth`.
   "current_id": "abc",
   "is_playing": true,
   "started_at": 1715500000000,
-  "paused_at": null
+  "paused_at": null,
+  "repeat": false
 }
 ```
 
@@ -91,6 +94,7 @@ let musicState = null;   // last fetched state from server
 let ytPlayer = null;     // YT.Player instance
 let musicPollTimer = null;
 let widgetExpanded = false;
+let localRepeat = false; // mirrors server repeat; used to drive onStateChange logic
 ```
 
 New functions:
@@ -103,6 +107,7 @@ New functions:
 - `skipSong()` — POSTs to `/api/music/skip`
 - `togglePlayPause()` — POSTs to `/api/music/play` or `/api/music/pause`
 - `extractYouTubeId(url)` — parses video ID from any YouTube URL format
+- `toggleRepeat()` — POSTs to `/api/music/repeat`; updates `localRepeat` immediately for responsive UI
 
 **YouTube title fetch (no API key):**
 ```
@@ -130,7 +135,7 @@ GET https://www.youtube.com/oembed?url=<youtube_url>&format=json
 │      Taylor Swift             │
 │      Added by Thunder         │
 ├──────────────────────────────┤
-│      ⏮    ⏸    ⏭            │
+│      ⏮    ⏸    ⏭    🔁      │  ← 🔁 highlighted when repeat is on
 │  ████████░░░░░  1:24 / 3:41  │
 ├──────────────────────────────┤
 │  Queue                [+ Add]│
@@ -145,7 +150,7 @@ GET https://www.youtube.com/oembed?url=<youtube_url>&format=json
 
 **Empty queue state:** Widget still renders but shows "No songs yet — add a YouTube URL" instead of song info. Play/skip controls are hidden.
 
-**Song ends (YouTube `onStateChange = YT.PlayerState.ENDED`):** Frontend calls `POST /api/music/skip`. If there is a next song, it begins playing. If the queue is exhausted, `current_id` is set to `null` and `is_playing` to `false` — widget returns to the empty state.
+**Song ends (YouTube `onStateChange = YT.PlayerState.ENDED`):** If `localRepeat` is `true`, frontend calls `ytPlayer.seekTo(0)` and keeps playing — no server call needed, no state change. If `repeat` is `false`, frontend calls `POST /api/music/skip`. If there is a next song, it begins playing. If the queue is exhausted, `current_id` is set to `null` and `is_playing` to `false` — widget returns to the empty state.
 
 ### CSS — added to `public/style.css`
 
@@ -161,6 +166,8 @@ New rules for `#music-widget`, `.music-widget-collapsed`, `.music-widget-expande
 | User presses Pause | Records `paused_at = elapsed_ms`, `is_playing = false` | Next poll pauses player |
 | User presses Skip | Advances `current_id`, resets `started_at = now` | Next poll loads new video and plays from 0 |
 | User resumes | Recalculates `started_at = now - paused_at`, clears `paused_at` | Next poll seeks to correct position |
+| User toggles repeat | Flips `repeat` key in `music_state` | Next poll updates `localRepeat`; 🔁 button highlights/dims |
+| Song ends with repeat on | No server action — client seeks to 0 locally | Other client's song also ends and seeks to 0 on its own |
 
 Poll interval: 5 seconds. This gives <5s desync, which is acceptable for background music.
 
@@ -185,3 +192,6 @@ Poll interval: 5 seconds. This gives <5s desync, which is acceptable for backgro
 6. Skip in Thunder's browser — verify both browsers advance to next song
 7. Add a second song from BF's browser — verify Thunder sees it in the queue
 8. Navigate between Calendar / Day / Gallery — verify music keeps playing uninterrupted
+9. Enable repeat (🔁 highlighted) — let song play to end, verify it restarts automatically
+10. With repeat on, press skip — verify it advances to next song (repeat does not prevent manual skip)
+11. Toggle repeat off from BF's browser — verify Thunder's widget reflects the change within 5 seconds
