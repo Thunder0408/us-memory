@@ -696,7 +696,10 @@ async function togglePlayPause() {
   try {
     if (!musicState) return;
     if (musicState.is_playing) {
-      await api('POST', '/api/music/pause');
+      const posMs = ytPlayer && ytPlayerReady && ytPlayer.getCurrentTime
+        ? Math.round(ytPlayer.getCurrentTime() * 1000)
+        : null;
+      await api('POST', '/api/music/pause', posMs != null ? { position_ms: posMs } : {});
     } else {
       await api('POST', '/api/music/play', {});
     }
@@ -778,8 +781,11 @@ function handleProgressClick(e, el) {
   const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   const duration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
   if (!duration) return;
-  const posMs = Math.round(ratio * duration * 1000);
-  ytPlayer.seekTo(ratio * duration, true);
+  const targetSecs = ratio * duration;
+  const posMs = Math.round(targetSecs * 1000);
+  ytPlayer.seekTo(targetSecs, true);
+  ytPlayer.playVideo();
+  musicState = { ...musicState, is_playing: true, started_at: Date.now() - posMs, paused_at: null };
   api('POST', '/api/music/play', { id: musicState.current_id, position_ms: posMs })
     .then(pollMusicState)
     .catch(() => {});
@@ -932,7 +938,7 @@ function renderMusicWidget() {
       <div class="mw-footer">
         <span class="mw-vol-icon">🔈</span>
         <div class="mw-vol-track" onclick="handleVolumeClick(event, this)" style="cursor:pointer">
-          <div class="mw-vol-fill"></div>
+          <div class="mw-vol-fill" style="width:${ytPlayer && ytPlayerReady && ytPlayer.getVolume ? ytPlayer.getVolume() : 70}%"></div>
         </div>
         <span class="mw-vol-icon">🔊</span>
       </div>

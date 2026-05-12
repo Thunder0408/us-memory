@@ -279,8 +279,11 @@ app.post('/api/music/play', requireAuth, (req, res) => {
 });
 
 app.post('/api/music/pause', requireAuth, (req, res) => {
+  const { position_ms } = req.body || {};
   const rawStarted = getMusicVal('started_at');
-  const elapsed = rawStarted ? Date.now() - Number(rawStarted) : 0;
+  const elapsed = position_ms != null
+    ? Number(position_ms)
+    : (rawStarted ? Date.now() - Number(rawStarted) : 0);
   setMusicVal('paused_at', elapsed);
   setMusicVal('is_playing', 'false');
   res.json({ ok: true });
