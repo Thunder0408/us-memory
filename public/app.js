@@ -689,29 +689,45 @@ async function addToQueue(youtubeUrl) {
 }
 
 async function togglePlayPause() {
-  if (!musicState) return;
-  if (musicState.is_playing) {
-    await api('POST', '/api/music/pause');
-  } else {
-    await api('POST', '/api/music/play', {});
+  try {
+    if (!musicState) return;
+    if (musicState.is_playing) {
+      await api('POST', '/api/music/pause');
+    } else {
+      await api('POST', '/api/music/play', {});
+    }
+    await pollMusicState();
+  } catch (err) {
+    console.warn('music: action failed', err);
   }
-  await pollMusicState();
 }
 
 async function restartSong() {
-  if (!musicState || !musicState.current_id) return;
-  await api('POST', '/api/music/play', { id: musicState.current_id });
-  await pollMusicState();
+  try {
+    if (!musicState || !musicState.current_id) return;
+    await api('POST', '/api/music/play', { id: musicState.current_id });
+    await pollMusicState();
+  } catch (err) {
+    console.warn('music: action failed', err);
+  }
 }
 
 async function skipSong() {
-  await api('POST', '/api/music/skip');
-  await pollMusicState();
+  try {
+    await api('POST', '/api/music/skip');
+    await pollMusicState();
+  } catch (err) {
+    console.warn('music: action failed', err);
+  }
 }
 
 async function removeSong(id) {
-  await api('DELETE', `/api/music/queue/${id}`);
-  await pollMusicState();
+  try {
+    await api('DELETE', `/api/music/queue/${id}`);
+    await pollMusicState();
+  } catch (err) {
+    console.warn('music: action failed', err);
+  }
 }
 
 async function toggleRepeat() {
