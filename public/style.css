@@ -2,6 +2,7 @@
   --bg: #fff8fa;
   --card: #ffffff;
   --primary: #e8728a;
+  --primary-dark: #c45a70;
   --primary-light: #fde8ed;
   --thunder: #5b8fb9;
   --thunder-light: #ddeaf5;
@@ -833,7 +834,7 @@ body {
 .mw-disc {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, var(--primary) 0%, #c45a70 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -889,6 +890,11 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: opacity 0.18s ease;
+}
+
+.mw-play-btn:hover {
+  opacity: 0.85;
 }
 
 .mw-expand-btn {
@@ -912,7 +918,7 @@ body {
 }
 
 .mw-header {
-  background: linear-gradient(135deg, var(--primary) 0%, #c45a70 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   padding: 14px;
   display: flex;
   align-items: center;
@@ -1013,7 +1019,7 @@ body {
   background: var(--primary);
   border-radius: 2px;
   width: 0%;
-  transition: width 0.5s linear;
+  transition: width 0.3s ease;
 }
 
 .mw-prog-times {
@@ -1135,6 +1141,11 @@ body {
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
+  transition: opacity 0.18s ease;
+}
+
+.mw-url-submit:hover {
+  opacity: 0.85;
 }
 
 .mw-footer {
