@@ -768,6 +768,61 @@ function handleVolumeClick(e) {
   if (fill) fill.style.width = `${volume}%`;
 }
 
+// ===== MUSIC PLAYBACK SYNC =====
+function syncPlayback(state, prev) {
+  if (!ytPlayerReady || !ytPlayer) return;
+
+  const currentSong = state.queue.find(s => s.id === state.current_id) || null;
+  const prevSong    = prev && prev.queue ? prev.queue.find(s => s.id === prev.current_id) : null;
+
+  if (!currentSong) {
+    if (ytPlayer.stopVideo) ytPlayer.stopVideo();
+    return;
+  }
+
+  const videoId = extractYouTubeId(currentSong.youtube_url);
+  if (!videoId) return;
+
+  const songChanged = !prevSong || prevSong.id !== currentSong.id;
+  if (songChanged) {
+    if (state.is_playing) {
+      const seekTo = state.started_at ? Math.max(0, (Date.now() - state.started_at) / 1000) : 0;
+      ytPlayer.loadVideoById(videoId, seekTo);
+    } else {
+      ytPlayer.cueVideoById(videoId, state.paused_at ? state.paused_at / 1000 : 0);
+    }
+    return;
+  }
+
+  const playerState = ytPlayer.getPlayerState ? ytPlayer.getPlayerState() : -1;
+
+  if (state.is_playing) {
+    const seekTo = state.started_at ? Math.max(0, (Date.now() - state.started_at) / 1000) : 0;
+    const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+    if (Math.abs(currentTime - seekTo) > 3) {
+      ytPlayer.seekTo(seekTo, true);
+    }
+    if (playerState !== YT.PlayerState.PLAYING && playerState !== YT.PlayerState.BUFFERING) {
+      ytPlayer.playVideo();
+    }
+  } else {
+    if (playerState === YT.PlayerState.PLAYING) {
+      ytPlayer.pauseVideo();
+    }
+  }
+}
+
+async function pollMusicState() {
+  try {
+    const state = await api('GET', '/api/music/state');
+    const prev = musicState;
+    musicState = state;
+    localRepeat = state.repeat;
+    syncPlayback(state, prev);
+    renderMusicWidget();
+  } catch (_) {}
+}
+
 // ===== INIT =====
 window.addEventListener('hashchange', renderRoute);
 
