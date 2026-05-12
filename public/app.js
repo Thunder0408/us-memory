@@ -22,6 +22,69 @@ let calMonth = new Date();
 let lightboxItems = [];
 let lightboxIndex = 0;
 
+// Music player
+let musicState    = null;
+let ytPlayer      = null;
+let ytPlayerReady = false;
+let musicPollTimer = null;
+let progressTimer  = null;
+let widgetExpanded = false;
+let showAddInput   = false;
+let localRepeat    = false;
+
+// ===== YOUTUBE IFRAME API CALLBACK =====
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-player', {
+    height: '1',
+    width: '1',
+    playerVars: { autoplay: 0, controls: 0 },
+    events: {
+      onReady: () => { ytPlayerReady = true; },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.ENDED) {
+          if (localRepeat) {
+            ytPlayer.seekTo(0);
+            ytPlayer.playVideo();
+          } else {
+            api('POST', '/api/music/skip').then(pollMusicState);
+          }
+        }
+      }
+    }
+  });
+}
+
+// ===== MUSIC HELPERS =====
+function extractYouTubeId(url) {
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /\/embed\/([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function formatTime(secs) {
+  if (!secs || isNaN(secs)) return '0:00';
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ===== API =====
 async function api(method, path, body = null) {
   const isForm = body instanceof FormData;
