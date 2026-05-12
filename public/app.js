@@ -160,6 +160,7 @@ async function login(user) {
   await api('POST', '/api/login', { user });
   currentUser = user;
   navigate('calendar');
+  initMusicWidget();
 }
 
 async function logout() {
@@ -922,6 +923,7 @@ function renderMusicWidget() {
 }
 
 function initMusicWidget() {
+  if (musicPollTimer) return;
   renderMusicWidget();
   pollMusicState();
   musicPollTimer = setInterval(pollMusicState, 5000);
