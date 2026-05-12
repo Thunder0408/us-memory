@@ -207,6 +207,19 @@ app.get('/api/calendar/:year/:month', requireAuth, (req, res) => {
   res.json({ noteEntries, ratings, mediaCounts });
 });
 
+// ── Music routes ──────────────────────────────────────────────────────────
+app.get('/api/music/state', requireAuth, (req, res) => {
+  const queue = db.prepare('SELECT * FROM music_queue ORDER BY position ASC').all();
+  const current_id = getMusicVal('current_id', null);
+  const rawStarted = getMusicVal('started_at');
+  const rawPaused  = getMusicVal('paused_at');
+  const started_at = rawStarted ? Number(rawStarted) : null;
+  const paused_at  = rawPaused  ? Number(rawPaused)  : null;
+  const is_playing = getMusicVal('is_playing') === 'true';
+  const repeat     = getMusicVal('repeat') === 'true';
+  res.json({ queue, current_id, started_at, paused_at, is_playing, repeat });
+});
+
 app.listen(PORT, () => {
   console.log(`\n💕 Our Memory is running!`);
   console.log(`   Local:  http://localhost:${PORT}`);
