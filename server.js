@@ -243,19 +243,23 @@ app.post('/api/music/queue', requireAuth, (req, res) => {
 
 app.delete('/api/music/queue/:id', requireAuth, (req, res) => {
   const { id } = req.params;
-  db.prepare('DELETE FROM music_queue WHERE id = ?').run(id);
-  if (getMusicVal('current_id') === id) {
-    const next = db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
-    if (next) {
-      setMusicVal('current_id', next.id);
-      setMusicVal('started_at', Date.now());
-      setMusicVal('paused_at', '');
-      setMusicVal('is_playing', 'true');
-    } else {
-      setMusicVal('current_id', '');
-      setMusicVal('is_playing', 'false');
+  const song = db.prepare('SELECT * FROM music_queue WHERE id = ?').get(id);
+  if (!song) return res.status(404).json({ error: 'Song not found' });
+  db.transaction(() => {
+    db.prepare('DELETE FROM music_queue WHERE id = ?').run(id);
+    if (getMusicVal('current_id') === id) {
+      const next = db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
+      if (next) {
+        setMusicVal('current_id', next.id);
+        setMusicVal('started_at', Date.now());
+        setMusicVal('paused_at', '');
+        setMusicVal('is_playing', 'true');
+      } else {
+        setMusicVal('current_id', '');
+        setMusicVal('is_playing', 'false');
+      }
     }
-  }
+  })();
   res.json({ ok: true });
 });
 
