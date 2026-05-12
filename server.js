@@ -263,6 +263,53 @@ app.delete('/api/music/queue/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/music/play', requireAuth, (req, res) => {
+  const { id } = req.body;
+  const target = id || getMusicVal('current_id');
+  if (!target) return res.status(400).json({ error: 'No song to play' });
+  const rawPaused = getMusicVal('paused_at');
+  const resumeOffset = rawPaused ? Number(rawPaused) : 0;
+  setMusicVal('current_id', target);
+  setMusicVal('started_at', Date.now() - resumeOffset);
+  setMusicVal('paused_at', '');
+  setMusicVal('is_playing', 'true');
+  res.json({ ok: true });
+});
+
+app.post('/api/music/pause', requireAuth, (req, res) => {
+  const rawStarted = getMusicVal('started_at');
+  const elapsed = rawStarted ? Date.now() - Number(rawStarted) : 0;
+  setMusicVal('paused_at', elapsed);
+  setMusicVal('is_playing', 'false');
+  res.json({ ok: true });
+});
+
+app.post('/api/music/skip', requireAuth, (req, res) => {
+  const current_id = getMusicVal('current_id');
+  const currentSong = current_id
+    ? db.prepare('SELECT * FROM music_queue WHERE id = ?').get(current_id)
+    : null;
+  const next = currentSong
+    ? db.prepare('SELECT * FROM music_queue WHERE position > ? ORDER BY position ASC LIMIT 1').get(currentSong.position)
+    : db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
+  if (next) {
+    setMusicVal('current_id', next.id);
+    setMusicVal('started_at', Date.now());
+    setMusicVal('paused_at', '');
+    setMusicVal('is_playing', 'true');
+  } else {
+    setMusicVal('current_id', '');
+    setMusicVal('is_playing', 'false');
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/music/repeat', requireAuth, (req, res) => {
+  const current = getMusicVal('repeat') === 'true';
+  setMusicVal('repeat', !current);
+  res.json({ repeat: !current });
+});
+
 app.listen(PORT, () => {
   console.log(`\n💕 Our Memory is running!`);
   console.log(`   Local:  http://localhost:${PORT}`);
