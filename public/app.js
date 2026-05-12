@@ -823,6 +823,104 @@ async function pollMusicState() {
   } catch (_) {}
 }
 
+function renderMusicWidget() {
+  const el = document.getElementById('music-widget');
+  if (!el) return;
+
+  const queue       = musicState ? musicState.queue : [];
+  const currentSong = musicState ? queue.find(s => s.id === musicState.current_id) : null;
+  const isPlaying   = musicState ? musicState.is_playing : false;
+
+  if (!widgetExpanded) {
+    el.innerHTML = `
+      <div class="mw-collapsed" onclick="toggleWidgetExpanded()">
+        <div class="mw-disc ${isPlaying ? 'spinning' : ''}">🎵</div>
+        <div class="mw-info">
+          ${currentSong
+            ? `<div class="mw-song-title">${escHtml(currentSong.title)}</div>
+               <div class="mw-meta">${queue.length} song${queue.length !== 1 ? 's' : ''} in queue</div>`
+            : `<div class="mw-empty-label">No music playing</div>`}
+        </div>
+        ${currentSong ? `
+          <button class="mw-play-btn" onclick="event.stopPropagation(); togglePlayPause()">
+            ${isPlaying ? '⏸' : '▶'}
+          </button>` : ''}
+        <button class="mw-expand-btn" onclick="event.stopPropagation(); toggleWidgetExpanded()">︿</button>
+      </div>`;
+    return;
+  }
+
+  // ── Expanded ──
+  const duration    = ytPlayer && ytPlayerReady && ytPlayer.getDuration    ? ytPlayer.getDuration()    : 0;
+  const currentTime = ytPlayer && ytPlayerReady && ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
+  const progress    = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  el.innerHTML = `
+    <div class="mw-expanded">
+      <div class="mw-header">
+        <div class="mw-header-thumb">🎵</div>
+        <div class="mw-header-info">
+          <div class="mw-header-title">${currentSong ? escHtml(currentSong.title) : 'No song playing'}</div>
+          ${currentSong ? `<div class="mw-header-sub">Added by ${escHtml(currentSong.added_by)}</div>` : ''}
+        </div>
+        <button class="mw-close-btn" onclick="toggleWidgetExpanded()">✕</button>
+      </div>
+
+      <div class="mw-controls">
+        <button class="mw-ctrl-btn" onclick="restartSong()" ${!currentSong ? 'disabled' : ''}>⏮</button>
+        <button class="mw-big-play-btn" onclick="togglePlayPause()" ${!currentSong ? 'disabled' : ''}>
+          ${isPlaying ? '⏸' : '▶'}
+        </button>
+        <button class="mw-ctrl-btn" onclick="skipSong()" ${!currentSong ? 'disabled' : ''}>⏭</button>
+        <button class="mw-ctrl-btn ${localRepeat ? '' : 'repeat-off'}" onclick="toggleRepeat()" title="Repeat one">🔁</button>
+      </div>
+
+      <div class="mw-progress">
+        <div class="mw-prog-bar">
+          <div class="mw-prog-fill" style="width:${progress.toFixed(1)}%"></div>
+        </div>
+        <div class="mw-prog-times">
+          <span class="mw-current-time">${formatTime(currentTime)}</span>
+          <span>${formatTime(duration)}</span>
+        </div>
+      </div>
+
+      <div class="mw-queue">
+        <div class="mw-queue-header">
+          Queue
+          <button class="mw-add-btn" onclick="toggleAddInput()">+ Add</button>
+        </div>
+        <div class="mw-queue-list">
+          ${queue.length === 0
+            ? `<div style="padding:8px 14px;font-size:11px;color:var(--text-light);">No songs yet — add a YouTube URL</div>`
+            : queue.map((song, i) => `
+                <div class="mw-queue-item ${song.id === (musicState && musicState.current_id) ? 'active' : ''}">
+                  ${song.id === (musicState && musicState.current_id)
+                    ? `<span class="mw-q-icon">▶</span>`
+                    : `<span class="mw-q-num">${i + 1}</span>`}
+                  <span class="mw-q-title" title="${escHtml(song.title)}">${escHtml(song.title)}</span>
+                  <button class="mw-q-del" onclick="removeSong('${song.id}')">✕</button>
+                </div>`).join('')}
+        </div>
+        ${showAddInput ? `
+          <div class="mw-add-input-row">
+            <input id="mw-url-input" class="mw-url-input"
+              placeholder="Paste YouTube URL..."
+              onkeydown="if(event.key==='Enter') submitAddUrl()">
+            <button class="mw-url-submit" onclick="submitAddUrl()">Add</button>
+          </div>` : ''}
+      </div>
+
+      <div class="mw-footer">
+        <span class="mw-vol-icon">🔈</span>
+        <div class="mw-vol-track" onclick="handleVolumeClick(event)">
+          <div class="mw-vol-fill"></div>
+        </div>
+        <span class="mw-vol-icon">🔊</span>
+      </div>
+    </div>`;
+}
+
 // ===== INIT =====
 window.addEventListener('hashchange', renderRoute);
 
