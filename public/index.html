@@ -29,5 +29,12 @@
     <button class="lightbox-next" onclick="lightboxNav(1)">›</button>
   </div>
   <script src="app.js"></script>
+
+  <!-- YouTube IFrame Player API — must load after DOM -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- Offscreen YouTube player target (1×1px, off-screen) -->
+  <div id="yt-player" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;pointer-events:none;"></div>
+  <!-- Music widget overlay — rendered by app.js, outside #app so it survives navigation -->
+  <div id="music-widget"></div>
 </body>
 </html>
