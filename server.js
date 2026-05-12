@@ -43,7 +43,28 @@ db.exec(`
     author TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS music_queue (
+    id TEXT PRIMARY KEY,
+    youtube_url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    added_by TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS music_state (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+function getMusicVal(key, fallback = null) {
+  const row = db.prepare('SELECT value FROM music_state WHERE key = ?').get(key);
+  return row ? row.value : fallback;
+}
+
+function setMusicVal(key, value) {
+  db.prepare('INSERT OR REPLACE INTO music_state (key, value) VALUES (?, ?)').run(key, String(value));
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
