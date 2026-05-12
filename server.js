@@ -264,13 +264,13 @@ app.delete('/api/music/queue/:id', requireAuth, (req, res) => {
 });
 
 app.post('/api/music/play', requireAuth, (req, res) => {
-  const { id } = req.body;
+  const { id, position_ms } = req.body;
   const target = id || getMusicVal('current_id');
   if (!target) return res.status(400).json({ error: 'No song to play' });
   const song = db.prepare('SELECT id FROM music_queue WHERE id = ?').get(target);
   if (!song) return res.status(404).json({ error: 'Song not found in queue' });
   const rawPaused = getMusicVal('paused_at');
-  const resumeOffset = rawPaused ? Number(rawPaused) : 0;
+  const resumeOffset = position_ms != null ? Number(position_ms) : (rawPaused ? Number(rawPaused) : 0);
   setMusicVal('current_id', target);
   setMusicVal('started_at', Date.now() - resumeOffset);
   setMusicVal('paused_at', '');

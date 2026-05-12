@@ -45,6 +45,9 @@ function onYouTubeIframeAPIReady() {
           if (localRepeat) {
             ytPlayer.seekTo(0);
             ytPlayer.playVideo();
+            if (musicState && musicState.current_id) {
+              api('POST', '/api/music/play', { id: musicState.current_id, position_ms: 0 }).catch(() => {});
+            }
           } else {
             api('POST', '/api/music/skip').then(pollMusicState);
           }
@@ -759,14 +762,27 @@ function submitAddUrl() {
   addToQueue(inp.value.trim());
 }
 
-function handleVolumeClick(e) {
+function handleVolumeClick(e, el) {
   if (!ytPlayer || !ytPlayerReady) return;
-  const rect = e.currentTarget.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
   const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   const volume = Math.round(ratio * 100);
   ytPlayer.setVolume(volume);
-  const fill = e.currentTarget.querySelector('.mw-vol-fill');
+  const fill = el.querySelector('.mw-vol-fill');
   if (fill) fill.style.width = `${volume}%`;
+}
+
+function handleProgressClick(e, el) {
+  if (!ytPlayer || !ytPlayerReady || !musicState || !musicState.current_id) return;
+  const rect = el.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const duration = ytPlayer.getDuration ? ytPlayer.getDuration() : 0;
+  if (!duration) return;
+  const posMs = Math.round(ratio * duration * 1000);
+  ytPlayer.seekTo(ratio * duration, true);
+  api('POST', '/api/music/play', { id: musicState.current_id, position_ms: posMs })
+    .then(pollMusicState)
+    .catch(() => {});
 }
 
 // ===== MUSIC PLAYBACK SYNC =====
@@ -820,6 +836,7 @@ async function pollMusicState() {
     musicState = state;
     localRepeat = state.repeat;
     syncPlayback(state, prev);
+    if (document.activeElement && document.activeElement.id === 'mw-url-input') return;
     renderMusicWidget();
   } catch (_) {}
 }
@@ -877,7 +894,7 @@ function renderMusicWidget() {
       </div>
 
       <div class="mw-progress">
-        <div class="mw-prog-bar">
+        <div class="mw-prog-bar" onclick="handleProgressClick(event, this)" style="cursor:pointer">
           <div class="mw-prog-fill" style="width:${progress.toFixed(1)}%"></div>
         </div>
         <div class="mw-prog-times">
@@ -914,7 +931,7 @@ function renderMusicWidget() {
 
       <div class="mw-footer">
         <span class="mw-vol-icon">🔈</span>
-        <div class="mw-vol-track" onclick="handleVolumeClick(event)">
+        <div class="mw-vol-track" onclick="handleVolumeClick(event, this)" style="cursor:pointer">
           <div class="mw-vol-fill"></div>
         </div>
         <span class="mw-vol-icon">🔊</span>
