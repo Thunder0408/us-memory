@@ -31,6 +31,7 @@ let progressTimer  = null;
 let widgetExpanded = false;
 let showAddInput   = false;
 let localRepeat    = false;
+let lastProgressSeekAt = 0;
 
 // ===== YOUTUBE IFRAME API CALLBACK =====
 function onYouTubeIframeAPIReady() {
@@ -316,7 +317,7 @@ async function renderDay(dateStr) {
                 class="note-textarea ${u.class}"
                 id="note-textarea-${name}"
                 placeholder="Write something about today..."
-                oninput="onNoteInput('${name}')"
+                oninput="onNoteInput('${name}', '${dateStr}')"
               >${noteMap[name] || ''}</textarea>
               <div class="note-actions">
                 <span class="note-saved" id="note-saved-${name}">Saved ✓</span>
@@ -408,17 +409,14 @@ async function rateDay(author, dateStr, rating) {
 }
 
 let noteTimers = {};
-function onNoteInput(author) {
+function onNoteInput(author, dateStr) {
   clearTimeout(noteTimers[author]);
-  noteTimers[author] = setTimeout(() => autoSaveNote(author), 1500);
+  noteTimers[author] = setTimeout(() => autoSaveNote(author, dateStr), 1500);
 }
 
-async function autoSaveNote(author) {
+async function autoSaveNote(author, dateStr) {
   const ta = document.getElementById(`note-textarea-${author}`);
-  if (!ta) return;
-  const dateStr = location.hash.split('/')[1];
-  if (!dateStr) return;
-  if (!ta.value.trim()) return;
+  if (!ta || !dateStr) return;
   await api('POST', '/api/notes', { date: dateStr, content: ta.value });
   const saved = document.getElementById(`note-saved-${author}`);
   if (saved) { saved.classList.add('show'); setTimeout(() => saved.classList.remove('show'), 2000); }
@@ -712,7 +710,7 @@ async function togglePlayPause() {
 async function restartSong() {
   try {
     if (!musicState || !musicState.current_id) return;
-    await api('POST', '/api/music/play', { id: musicState.current_id });
+    await api('POST', '/api/music/play', { id: musicState.current_id, position_ms: 0 });
     await pollMusicState();
   } catch (err) {
     console.warn('music: action failed', err);
@@ -783,12 +781,13 @@ function handleProgressClick(e, el) {
   if (!duration) return;
   const targetSecs = ratio * duration;
   const posMs = Math.round(targetSecs * 1000);
+  lastProgressSeekAt = Date.now();
   ytPlayer.seekTo(targetSecs, true);
   ytPlayer.playVideo();
   musicState = { ...musicState, is_playing: true, started_at: Date.now() - posMs, paused_at: null };
   api('POST', '/api/music/play', { id: musicState.current_id, position_ms: posMs })
-    .then(pollMusicState)
-    .catch(() => {});
+    .then(() => { lastProgressSeekAt = 0; return pollMusicState(); })
+    .catch(() => { lastProgressSeekAt = 0; });
 }
 
 // ===== MUSIC PLAYBACK SYNC =====
@@ -822,7 +821,8 @@ function syncPlayback(state, prev) {
   if (state.is_playing) {
     const seekTo = state.started_at ? Math.max(0, (Date.now() - state.started_at) / 1000) : 0;
     const currentTime = ytPlayer.getCurrentTime ? ytPlayer.getCurrentTime() : 0;
-    if (Math.abs(currentTime - seekTo) > 3) {
+    const inGracePeriod = lastProgressSeekAt > 0 && (Date.now() - lastProgressSeekAt < 2000);
+    if (!inGracePeriod && Math.abs(currentTime - seekTo) > 3) {
       ytPlayer.seekTo(seekTo, true);
     }
     if (playerState !== YT.PlayerState.PLAYING && playerState !== YT.PlayerState.BUFFERING) {

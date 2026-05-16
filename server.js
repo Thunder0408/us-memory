@@ -55,15 +55,23 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+  CREATE INDEX IF NOT EXISTS idx_notes_date     ON notes(date);
+  CREATE INDEX IF NOT EXISTS idx_ratings_date   ON ratings(date);
+  CREATE INDEX IF NOT EXISTS idx_media_date     ON media(date);
+  CREATE INDEX IF NOT EXISTS idx_media_created  ON media(created_at);
+  CREATE INDEX IF NOT EXISTS idx_mq_position    ON music_queue(position);
 `);
 
+const stmtGetMusicVal = db.prepare('SELECT value FROM music_state WHERE key = ?');
+const stmtSetMusicVal = db.prepare('INSERT OR REPLACE INTO music_state (key, value) VALUES (?, ?)');
+
 function getMusicVal(key, fallback = null) {
-  const row = db.prepare('SELECT value FROM music_state WHERE key = ?').get(key);
+  const row = stmtGetMusicVal.get(key);
   return row ? row.value : fallback;
 }
 
 function setMusicVal(key, value) {
-  db.prepare('INSERT OR REPLACE INTO music_state (key, value) VALUES (?, ?)').run(key, String(value));
+  stmtSetMusicVal.run(key, String(value));
 }
 
 app.use(express.json());
@@ -248,7 +256,9 @@ app.delete('/api/music/queue/:id', requireAuth, (req, res) => {
   db.transaction(() => {
     db.prepare('DELETE FROM music_queue WHERE id = ?').run(id);
     if (getMusicVal('current_id') === id) {
-      const next = db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
+      const next =
+        db.prepare('SELECT * FROM music_queue WHERE position > ? ORDER BY position ASC LIMIT 1').get(song.position) ||
+        db.prepare('SELECT * FROM music_queue ORDER BY position ASC LIMIT 1').get();
       if (next) {
         setMusicVal('current_id', next.id);
         setMusicVal('started_at', Date.now());

@@ -46,7 +46,7 @@ pm2-startup install
 :: Start the server
 echo.
 echo  Starting the memory server...
-pm2 start server.js --name "our-memory"
+pm2 start server.js --name "us-memory"
 pm2 save
 
 echo.
