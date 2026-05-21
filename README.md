@@ -12,6 +12,7 @@ A private couple diary and memory site for Thunder and BF. Log daily notes, rate
 - **Photo & video gallery** — Upload images and videos (up to 500 MB each) per day or to a shared gallery; supports JPEG, PNG, GIF, WebP, AVIF, HEIC, MP4, MOV, WebM, AVI, and more
 - **Lightbox viewer** — Full-screen image/video viewer with prev/next navigation
 - **No-password login** — Pick your identity (Thunder or BF) from an avatar selector; session persists for 30 days
+- **Shared music player** — YouTube-backed queue with play/pause/skip/restart/repeat controls; playback state is shared so both users stay in sync
 - **Remote access** — Share via Tailscale Funnel so both can use the site from anywhere
 
 ---
@@ -53,6 +54,8 @@ us-memory/
 - `notes` — `(date, author)` → diary text
 - `ratings` — `(date, author)` → integer rating
 - `media` — file metadata linked to a date and author
+- `music_queue` — YouTube URLs with title, position, and who added them
+- `music_state` — key/value store for shared playback state (current track, play/pause, seek position, repeat)
 
 ---
 
@@ -114,7 +117,7 @@ https://usmemory.tail01df1e.ts.net
 
 ```bash
 pm2 list                    # Show running processes
-pm2 logs our-memory         # View server logs
-pm2 restart our-memory      # Restart the server
-pm2 stop our-memory         # Stop the server
+pm2 logs us-memory          # View server logs
+pm2 restart us-memory       # Restart the server
+pm2 stop us-memory          # Stop the server
 ```
