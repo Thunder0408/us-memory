@@ -1,4 +1,4 @@
-// ===== CONFIG =====
+﻿// ===== CONFIG =====
 const USERS = {
   Thunder: { img: '/animals/capybara.jpg',  class: 'thunder', label: 'Thunder' },
   BF:      { img: '/animals/chihuahua.jpg', class: 'bf',      label: 'BF' }
@@ -148,7 +148,7 @@ function renderLogin() {
         ${ANIMAL_IMGS.map(src => `<img src="${src}" class="login-animal-img" alt="">`).join('')}
       </div>
       <div class="login-title">Us Memory</div>
-      <div class="login-sub">💕 Who are you?</div>
+      <div class="login-sub">Who are you?</div>
       <div class="login-cards">
         ${Object.entries(USERS).map(([name, u]) => `
           <div class="login-card ${u.class}" onclick="login('${name}')">
@@ -183,14 +183,14 @@ function topbar(active = '') {
   return `
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:12px">
-        <div class="topbar-title">💕 Us Memory</div>
+        <div class="topbar-title">Us Memory</div>
         <div class="topbar-animals">
           ${ANIMAL_IMGS.map(src => `<img src="${src}" class="topbar-animal-img" alt="">`).join('')}
         </div>
       </div>
       <div class="topbar-right">
         <button class="btn btn-ghost btn-sm" onclick="navigate('${active === 'gallery' ? 'calendar' : 'gallery'}')">
-          ${active === 'gallery' ? '📅 Calendar' : '🖼️ Us Gallery'}
+          ${active === 'gallery' ? '<i class="fa-solid fa-calendar-days"></i> Calendar' : '<i class="fa-solid fa-images"></i> Gallery'}
         </button>
         <div class="user-badge ${u.class}"><img src="${u.img}" class="badge-img" alt="${u.label}"> ${u.label}</div>
         <button class="btn btn-ghost btn-sm" onclick="logout()">Leave</button>
@@ -242,14 +242,14 @@ async function renderCalendar() {
 
     const anyActivity = !isFuture && (noteAuthors.has('Thunder') || noteAuthors.has('BF') || counts.Thunder || counts.BF);
     const activityBlock = anyActivity ? `
-      <div class="cal-act-header"><span>📝</span><span>📷</span></div>
-      <div class="cal-act-row thunder"><span>${noteAuthors.has('Thunder') ? '✓' : '-'}</span><span>${counts.Thunder || '-'}</span></div>
-      <div class="cal-act-row bf"><span>${noteAuthors.has('BF') ? '✓' : '-'}</span><span>${counts.BF || '-'}</span></div>
+      <div class="cal-act-header"><span><i class="fa-solid fa-pen"></i></span><span><i class="fa-solid fa-camera"></i></span></div>
+      <div class="cal-act-row thunder"><span>${noteAuthors.has('Thunder') ? '<i class="fa-solid fa-check"></i>' : '-'}</span><span>${counts.Thunder || '-'}</span></div>
+      <div class="cal-act-row bf"><span>${noteAuthors.has('BF') ? '<i class="fa-solid fa-check"></i>' : '-'}</span><span>${counts.BF || '-'}</span></div>
     ` : '';
 
     const avg = (ratings.Thunder && ratings.BF) ? (ratings.Thunder + ratings.BF) / 2 : null;
     const scoreRow = avg !== null
-      ? `<div class="cal-score">♥ ${Number.isInteger(avg) ? avg : avg.toFixed(1)}</div>`
+      ? `<div class="cal-score"><i class="fa-solid fa-heart"></i> ${Number.isInteger(avg) ? avg : avg.toFixed(1)}</div>`
       : '';
 
     cells += `
@@ -305,14 +305,14 @@ async function renderDay(dateStr) {
     ${topbar('calendar')}
     <div class="day-page" style="position:relative;z-index:1">
       <div class="day-header">
-        <button class="btn btn-ghost btn-sm" onclick="navigate('calendar')">← Back</button>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('calendar')"><i class="fa-solid fa-arrow-left"></i> Back</button>
         <div>
-          <div class="day-title">📖 ${dateLabel}</div>
+          <div class="day-title">${dateLabel}</div>
         </div>
       </div>
 
       <div class="section-card">
-        <div class="section-title">📝 Journal</div>
+        <div class="section-title">Journal</div>
         ${Object.entries(USERS).map(([name, u]) => `
           <div class="note-block" id="note-block-${name}">
             <div class="note-author ${u.class}"><img src="${u.img}" class="author-img" alt="${u.label}"> ${u.label}</div>
@@ -324,7 +324,7 @@ async function renderDay(dateStr) {
                 oninput="onNoteInput('${name}', '${dateStr}')"
               >${noteMap[name] || ''}</textarea>
               <div class="note-actions">
-                <span class="note-saved" id="note-saved-${name}">Saved ✓</span>
+                <span class="note-saved" id="note-saved-${name}"><i class="fa-solid fa-check"></i> Saved</span>
                 <button class="btn btn-primary btn-sm" onclick="saveNote('${name}','${dateStr}')">Save</button>
               </div>
             ` : `
@@ -339,7 +339,7 @@ async function renderDay(dateStr) {
       </div>
 
       <div class="section-card">
-        <div class="section-title">♥ How was today?</div>
+        <div class="section-title"><i class="fa-solid fa-heart"></i> How was today?</div>
         <div class="ratings-row">
           ${Object.entries(USERS).map(([name, u]) => `
             <div class="rating-block">
@@ -350,20 +350,20 @@ async function renderDay(dateStr) {
             </div>
           `).join('')}
         </div>
-        ${(() => {
+        <div id="day-total-score">${(() => {
           const scores = Object.values(ratingMap).filter(r => r > 0);
-          if (!scores.length) return '';
+          if (scores.length < Object.keys(USERS).length) return '';
           const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
           const display = Number.isInteger(avg) ? avg : avg.toFixed(1);
           return `<div class="total-score">
             <span class="total-score-label">Today's Score</span>
-            <span class="total-score-value">${display} / 10 ♥</span>
+            <span class="total-score-value">${display} / 10 <i class="fa-solid fa-heart"></i></span>
           </div>`;
-        })()}
+        })()}</div>
       </div>
 
       <div class="section-card">
-        <div class="section-title">📸 Photos & Videos</div>
+        <div class="section-title">Photos & Videos</div>
         <label class="media-upload-area" id="upload-area-${dateStr}">
           <input type="file" accept="image/*,video/*" multiple onchange="uploadMedia(this,'${dateStr}')">
           <div><i class="fa-solid fa-upload"></i> Click to upload photos or videos</div>
@@ -386,11 +386,12 @@ function renderHearts(rating, editable, author, dateStr) {
   for (let i = 1; i <= 10; i++) {
     const filledClass = i <= rating ? ' filled' : '';
     if (editable) {
-      html += `<span class="heart${filledClass}" onclick="rateDay('${author}','${dateStr}',${i})" onmouseover="previewHearts('${author}',${i})" onmouseout="resetHearts('${author}','${dateStr}',${rating})">♥</span>`;
+      html += `<span class="heart${filledClass}" onclick="rateDay('${author}','${dateStr}',${i})" onmouseover="previewHearts('${author}',${i})" onmouseout="resetHearts('${author}','${dateStr}',${rating})"><i class="fa-solid fa-heart"></i></span>`;
     } else {
-      html += `<span class="heart readonly${filledClass}">♥</span>`;
+      html += `<span class="heart readonly${filledClass}"><i class="fa-solid fa-heart"></i></span>`;
     }
   }
+  if (rating > 0) html += `<span class="heart-score">${rating}</span>`;
   return html;
 }
 
@@ -410,6 +411,23 @@ async function rateDay(author, dateStr, rating) {
   await api('POST', '/api/ratings', { date: dateStr, rating });
   const row = document.getElementById(`hearts-${author}`);
   if (row) row.innerHTML = renderHearts(rating, true, author, dateStr);
+  await refreshDayScore(dateStr);
+}
+
+async function refreshDayScore(dateStr) {
+  const ratings = await api('GET', `/api/ratings/${dateStr}`);
+  const ratingMap = {};
+  ratings.forEach(r => { ratingMap[r.author] = r.rating; });
+  const scores = Object.values(ratingMap).filter(r => r > 0);
+  const container = document.getElementById('day-total-score');
+  if (!container) return;
+  if (scores.length < Object.keys(USERS).length) { container.innerHTML = ''; return; }
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const display = Number.isInteger(avg) ? avg : avg.toFixed(1);
+  container.innerHTML = `<div class="total-score">
+    <span class="total-score-label">Today's Score</span>
+    <span class="total-score-value">${display} / 10 <i class="fa-solid fa-heart"></i></span>
+  </div>`;
 }
 
 let noteTimers = {};
@@ -468,14 +486,14 @@ async function uploadMedia(input, dateStr) {
       const media = await api('GET', `/api/media/${dateStr}`);
       const grid = document.getElementById('media-grid-day');
       if (grid) { grid.innerHTML = renderMediaItems(media, true); lightboxItems = media; fixVideoThumbnails(); }
-      showUploadStatus(statusId, 'success', `✓ ${count} file${count > 1 ? 's' : ''} uploaded successfully!`);
+      showUploadStatus(statusId, 'success', `<i class="fa-solid fa-check"></i> ${count} file${count > 1 ? 's' : ''} uploaded successfully!`);
     } else {
-      showUploadStatus(statusId, 'success', `✓ ${count} file${count > 1 ? 's' : ''} uploaded successfully!`);
+      showUploadStatus(statusId, 'success', `<i class="fa-solid fa-check"></i> ${count} file${count > 1 ? 's' : ''} uploaded successfully!`);
       setTimeout(() => renderGallery(), 1500);
     }
     input.value = '';
   } catch (e) {
-    showUploadStatus(statusId, 'error', `✗ Upload failed: ${e.message}`);
+    showUploadStatus(statusId, 'error', `<i class="fa-solid fa-xmark"></i> Upload failed: ${e.message}`);
   }
 }
 
@@ -523,8 +541,8 @@ async function renderGallery() {
     ${animalBg()}
     ${topbar('gallery')}
     <div class="gallery-page" style="position:relative;z-index:1">
-      <div class="gallery-title">🖼️ Us Gallery</div>
-      <div class="gallery-sub">All our photos and videos in one place 💕</div>
+      <div class="gallery-title">Us Gallery</div>
+      <div class="gallery-sub">All our photos and videos in one place</div>
       <div class="gallery-toolbar">
         <span style="color:var(--text-light);font-weight:700;font-size:0.9rem">${media.length} item${media.length !== 1 ? 's' : ''}</span>
         <label style="cursor:pointer">
@@ -535,7 +553,7 @@ async function renderGallery() {
       <div id="upload-status-gallery" class="upload-status" style="display:none"></div>
       ${media.length === 0 ? `
         <div class="empty-state">
-          <div class="empty-emoji">📷</div>
+          <div class="empty-emoji"><i class="fa-solid fa-camera"></i></div>
           <p>No photos or videos yet — upload your first memory!</p>
         </div>
       ` : `
