@@ -266,7 +266,10 @@ async function renderCalendar() {
     <div class="calendar-page" style="position:relative;z-index:1">
       <div class="calendar-nav">
         <button class="btn btn-ghost btn-sm" onclick="shiftMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
-        <div class="calendar-month">${monthNames[month - 1]} ${year}</div>
+        <div class="calendar-month">
+          ${monthNames[month - 1]} ${year}
+          <button class="summary-trigger" onclick="openMonthlySummary(${year},${month})"><i class="fa-solid fa-chart-bar"></i></button>
+        </div>
         <button class="btn btn-ghost btn-sm" onclick="shiftMonth(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
       </div>
       <div class="calendar-grid">
@@ -280,6 +283,26 @@ async function renderCalendar() {
 function shiftMonth(dir) {
   calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + dir, 1);
   renderCalendar();
+}
+
+async function openMonthlySummary(year, month) {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('summary-title').textContent = `${monthNames[month - 1]} ${year}`;
+  document.getElementById('summary-grid').innerHTML = '<div class="summary-loading">Loading...</div>';
+  document.getElementById('month-summary-modal').style.display = 'flex';
+  const d = await api('GET', `/api/summary/${year}/${month}`);
+  document.getElementById('summary-grid').innerHTML = `
+    <div class="summary-stat"><i class="fa-solid fa-image"></i><span>${d.photos}</span><label>Photos</label></div>
+    <div class="summary-stat"><i class="fa-solid fa-video"></i><span>${d.videos}</span><label>Videos</label></div>
+    <div class="summary-stat"><i class="fa-solid fa-book-open"></i><span>${d.journalDays}</span><label>Journal Days</label></div>
+    <div class="summary-stat"><i class="fa-solid fa-pencil"></i><span>${d.wordCount.toLocaleString()}</span><label>Words Written</label></div>
+    <div class="summary-stat"><i class="fa-solid fa-heart"></i><span>${d.avgScore !== null ? d.avgScore : '—'}</span><label>Avg Score</label></div>
+    <div class="summary-stat"><i class="fa-solid fa-calendar-check"></i><span>${d.scoreDays}</span><label>Days Rated</label></div>
+  `;
+}
+
+function closeMonthlySummary() {
+  document.getElementById('month-summary-modal').style.display = 'none';
 }
 
 // ===== DAY PAGE =====
@@ -630,10 +653,13 @@ function fixVideoThumbnails() {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('month-summary-modal').style.display !== 'none') { closeMonthlySummary(); return; }
+    if (!document.getElementById('lightbox').classList.contains('hidden')) closeLightbox();
+  }
   if (document.getElementById('lightbox').classList.contains('hidden')) return;
   if (e.key === 'ArrowRight') lightboxNav(1);
   if (e.key === 'ArrowLeft') lightboxNav(-1);
-  if (e.key === 'Escape') closeLightbox();
 });
 
 document.getElementById('lightbox').addEventListener('click', e => {

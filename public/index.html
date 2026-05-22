@@ -23,6 +23,14 @@
     </div>
   </div>
 
+  <div id="month-summary-modal" class="confirm-modal" style="display:none">
+    <div class="confirm-box summary-box">
+      <button class="summary-close" onclick="closeMonthlySummary()"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="summary-title" id="summary-title"></h3>
+      <div class="summary-grid" id="summary-grid"></div>
+    </div>
+  </div>
+
   <div id="lightbox" class="lightbox hidden">
     <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
     <button class="lightbox-prev" onclick="lightboxNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>

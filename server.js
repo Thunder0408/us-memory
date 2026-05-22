@@ -215,6 +215,32 @@ app.get('/api/calendar/:year/:month', requireAuth, (req, res) => {
   res.json({ noteEntries, ratings, mediaCounts });
 });
 
+// --- Monthly summary ---
+app.get('/api/summary/:year/:month', requireAuth, (req, res) => {
+  if (!/^\d{4}$/.test(req.params.year) || !/^\d{1,2}$/.test(req.params.month)) return res.status(400).json({ error: 'Invalid year/month' });
+  const prefix = `${req.params.year}-${req.params.month.padStart(2, '0')}-%`;
+  const mediaCounts = db.prepare(`
+    SELECT
+      SUM(CASE WHEN mimetype LIKE 'image/%' THEN 1 ELSE 0 END) AS photos,
+      SUM(CASE WHEN mimetype LIKE 'video/%' THEN 1 ELSE 0 END) AS videos
+    FROM media WHERE date LIKE ?
+  `).get(prefix);
+  const journalDays = db.prepare(`
+    SELECT COUNT(DISTINCT date) AS days FROM notes WHERE date LIKE ? AND TRIM(content) != ''
+  `).get(prefix).days;
+  const noteContents = db.prepare(`SELECT content FROM notes WHERE date LIKE ? AND TRIM(content) != ''`).all(prefix);
+  const wordCount = noteContents.reduce((acc, row) => acc + row.content.trim().split(/\s+/).filter(Boolean).length, 0);
+  const scoreRow = db.prepare(`SELECT AVG(rating) AS avg, COUNT(*) AS days FROM ratings WHERE date LIKE ?`).get(prefix);
+  res.json({
+    photos: mediaCounts.photos || 0,
+    videos: mediaCounts.videos || 0,
+    journalDays,
+    wordCount,
+    avgScore: scoreRow.avg ? Math.round(scoreRow.avg * 10) / 10 : null,
+    scoreDays: scoreRow.days || 0
+  });
+});
+
 // ── Music routes ──────────────────────────────────────────────────────────
 app.get('/api/music/state', requireAuth, (req, res) => {
   const queue = db.prepare('SELECT * FROM music_queue ORDER BY position ASC').all();

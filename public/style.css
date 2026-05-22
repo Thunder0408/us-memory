@@ -1191,3 +1191,57 @@ body {
   width: 70%;
   pointer-events: none;
 }
+
+/* ===== MONTHLY SUMMARY MODAL ===== */
+.summary-box {
+  position: relative;
+  min-width: 320px;
+  text-align: left;
+  padding: 32px 28px 28px;
+}
+.summary-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--text-light);
+  line-height: 1;
+}
+.summary-close:hover { color: var(--text); }
+.summary-title {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px 12px;
+}
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.summary-stat i { font-size: 1.25rem; color: var(--primary); }
+.summary-stat span { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+.summary-stat label { font-size: 0.7rem; font-weight: 700; color: var(--text-light); text-align: center; text-transform: uppercase; letter-spacing: 0.4px; }
+.summary-loading { text-align: center; color: var(--text-light); font-weight: 600; padding: 20px 0; grid-column: span 3; }
+.summary-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  vertical-align: middle;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.summary-trigger:hover { color: var(--primary); }

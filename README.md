@@ -10,6 +10,7 @@ A private couple diary and memory site for Thunder and BF. Log daily notes, rate
 - **Daily diary** — Each person writes their own note for the day, stored separately and shown side by side
 - **Day ratings** — Rate each day (1–10); both ratings appear together on the day view
 - **Photo & video gallery** — Upload images and videos (up to 500 MB each) per day or to a shared gallery; supports JPEG, PNG, GIF, WebP, AVIF, HEIC, MP4, MOV, WebM, AVI, and more
+- **Monthly summary** — Click the chart icon next to any month to see a stats modal: photo/video count, journal days, total word count, average day rating, and days rated
 - **Lightbox viewer** — Full-screen image/video viewer with prev/next navigation
 - **No-password login** — Pick your identity (Thunder or BF) from an avatar selector; session persists for 30 days
 - **Shared music player** — YouTube-backed queue with play/pause/skip/restart/repeat controls; playback state is shared so both users stay in sync
