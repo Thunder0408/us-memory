@@ -40,7 +40,11 @@ function onYouTubeIframeAPIReady() {
     width: '1',
     playerVars: { autoplay: 0, controls: 0 },
     events: {
-      onReady: () => { ytPlayerReady = true; },
+      onReady: () => {
+        ytPlayerReady = true;
+        const saved = parseInt(localStorage.getItem('mw-volume'));
+        if (!isNaN(saved)) ytPlayer.setVolume(saved);
+      },
       onStateChange: (e) => {
         if (e.data === YT.PlayerState.ENDED) {
           if (localRepeat) {
@@ -261,9 +265,9 @@ async function renderCalendar() {
     ${topbar('calendar')}
     <div class="calendar-page" style="position:relative;z-index:1">
       <div class="calendar-nav">
-        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(-1)">‹ Prev</button>
+        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
         <div class="calendar-month">${monthNames[month - 1]} ${year}</div>
-        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(1)">Next ›</button>
+        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
       </div>
       <div class="calendar-grid">
         ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-header">${d}</div>`).join('')}
@@ -362,7 +366,7 @@ async function renderDay(dateStr) {
         <div class="section-title">📸 Photos & Videos</div>
         <label class="media-upload-area" id="upload-area-${dateStr}">
           <input type="file" accept="image/*,video/*" multiple onchange="uploadMedia(this,'${dateStr}')">
-          <div>📤 Click to upload photos or videos</div>
+          <div><i class="fa-solid fa-upload"></i> Click to upload photos or videos</div>
           <div style="font-size:0.8rem;margin-top:6px">Images & videos up to 500MB</div>
         </label>
         <div id="upload-status-day" class="upload-status" style="display:none"></div>
@@ -495,10 +499,10 @@ function renderMediaItems(mediaList, withDelete = false) {
     const u = USERS[m.author] || { img: '/animals/capybara.jpg', label: m.author, class: '' };
     const dateStr = m.date || '';
     const deleteBtn = withDelete
-      ? `<button class="media-delete" onclick="event.stopPropagation();deleteMedia(${m.id},'${dateStr}')" title="Delete">✕</button>`
+      ? `<button class="media-delete" onclick="event.stopPropagation();deleteMedia(${m.id},'${dateStr}')" title="Delete"><i class="fa-solid fa-xmark"></i></button>`
       : '';
     const thumb = isVideo
-      ? `<video src="/uploads/${m.filename}" muted preload="metadata" onerror="this.closest('.media-item').classList.add('media-broken')"></video><span class="video-play-icon">▶</span>`
+      ? `<video src="/uploads/${m.filename}" muted preload="metadata" onerror="this.closest('.media-item').classList.add('media-broken')"></video><span class="video-play-icon"><i class="fa-solid fa-play"></i></span>`
       : `<img src="/uploads/${m.filename}" alt="${m.original_name}" loading="lazy" onerror="this.closest('.media-item').classList.add('media-broken')">`;
     return `
       <div class="media-item" onclick="openLightbox(${i})">
@@ -525,7 +529,7 @@ async function renderGallery() {
         <span style="color:var(--text-light);font-weight:700;font-size:0.9rem">${media.length} item${media.length !== 1 ? 's' : ''}</span>
         <label style="cursor:pointer">
           <input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadMedia(this,null)">
-          <span class="btn btn-primary">📤 Upload to Gallery</span>
+          <span class="btn btn-primary"><i class="fa-solid fa-upload"></i> Upload to Gallery</span>
         </label>
       </div>
       <div id="upload-status-gallery" class="upload-status" style="display:none"></div>
@@ -542,9 +546,9 @@ async function renderGallery() {
             const dateFmt = m.date ? formatDateLabel(m.date) : formatDateTime(m.created_at);
             return `
               <div class="gallery-item" onclick="openLightbox(${i})">
-                <button class="media-delete" onclick="event.stopPropagation();deleteMedia(${m.id},null)" title="Delete">✕</button>
+                <button class="media-delete" onclick="event.stopPropagation();deleteMedia(${m.id},null)" title="Delete"><i class="fa-solid fa-xmark"></i></button>
                 ${isVideo
-                  ? `<video src="/uploads/${m.filename}" muted preload="metadata" onerror="this.closest('.gallery-item').classList.add('media-broken')"></video><span class="video-play-icon">▶</span>`
+                  ? `<video src="/uploads/${m.filename}" muted preload="metadata" onerror="this.closest('.gallery-item').classList.add('media-broken')"></video><span class="video-play-icon"><i class="fa-solid fa-play"></i></span>`
                   : `<img src="/uploads/${m.filename}" alt="${m.original_name}" loading="lazy" onerror="this.closest('.gallery-item').classList.add('media-broken')">`}
                 <div class="gallery-item-meta">${u.label} · ${dateFmt}</div>
               </div>
@@ -576,14 +580,14 @@ function lightboxNav(dir) {
 
 function lightboxError(type) {
   const m = lightboxItems[lightboxIndex];
-  const icon = type === 'video' ? '🎬' : '📷';
+  const icon = type === 'video' ? '<i class="fa-solid fa-film"></i>' : '<i class="fa-solid fa-camera"></i>';
   const msg = type === 'video' ? 'Cannot play this video' : 'Cannot display this image';
   document.getElementById('lightbox-content').innerHTML = `
     <div class="lightbox-error">
       <div style="font-size:2.5rem">${icon}</div>
       <div style="font-weight:700;margin-top:8px">${msg}</div>
       <div style="font-size:0.8rem;opacity:0.65;margin-top:4px">${m ? m.original_name : ''}</div>
-      ${m ? `<a href="/uploads/${m.filename}" download="${m.original_name}" class="btn btn-primary" style="margin-top:16px;text-decoration:none">⬇ Download</a>` : ''}
+      ${m ? `<a href="/uploads/${m.filename}" download="${m.original_name}" class="btn btn-primary" style="margin-top:16px;text-decoration:none"><i class="fa-solid fa-download"></i> Download</a>` : ''}
     </div>
   `;
 }
@@ -769,6 +773,7 @@ function handleVolumeClick(e, el) {
   const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   const volume = Math.round(ratio * 100);
   ytPlayer.setVolume(volume);
+  localStorage.setItem('mw-volume', volume);
   const fill = el.querySelector('.mw-vol-fill');
   if (fill) fill.style.width = `${volume}%`;
 }
@@ -858,7 +863,7 @@ function renderMusicWidget() {
   if (!widgetExpanded) {
     el.innerHTML = `
       <div class="mw-collapsed" onclick="toggleWidgetExpanded()">
-        <div class="mw-disc ${isPlaying ? 'spinning' : ''}">🎵</div>
+        <div class="mw-disc ${isPlaying ? 'spinning' : ''}"><i class="fa-solid fa-music"></i></div>
         <div class="mw-info">
           ${currentSong
             ? `<div class="mw-song-title">${escHtml(currentSong.title)}</div>
@@ -867,9 +872,9 @@ function renderMusicWidget() {
         </div>
         ${currentSong ? `
           <button class="mw-play-btn" onclick="event.stopPropagation(); togglePlayPause()">
-            ${isPlaying ? '⏸' : '▶'}
+            ${isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'}
           </button>` : ''}
-        <button class="mw-expand-btn" onclick="event.stopPropagation(); toggleWidgetExpanded()">︿</button>
+        <button class="mw-expand-btn" onclick="event.stopPropagation(); toggleWidgetExpanded()"><i class="fa-solid fa-chevron-up"></i></button>
       </div>`;
     return;
   }
@@ -882,21 +887,21 @@ function renderMusicWidget() {
   el.innerHTML = `
     <div class="mw-expanded">
       <div class="mw-header">
-        <div class="mw-header-thumb">🎵</div>
+        <div class="mw-header-thumb"><i class="fa-solid fa-music"></i></div>
         <div class="mw-header-info">
           <div class="mw-header-title">${currentSong ? escHtml(currentSong.title) : 'No song playing'}</div>
           ${currentSong ? `<div class="mw-header-sub">Added by ${escHtml(currentSong.added_by)}</div>` : ''}
         </div>
-        <button class="mw-close-btn" onclick="toggleWidgetExpanded()">✕</button>
+        <button class="mw-close-btn" onclick="toggleWidgetExpanded()"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="mw-controls">
-        <button class="mw-ctrl-btn" onclick="restartSong()" ${!currentSong ? 'disabled' : ''}>⏮</button>
+        <button class="mw-ctrl-btn" onclick="restartSong()" ${!currentSong ? 'disabled' : ''}><i class="fa-solid fa-backward-step"></i></button>
         <button class="mw-big-play-btn" onclick="togglePlayPause()" ${!currentSong ? 'disabled' : ''}>
-          ${isPlaying ? '⏸' : '▶'}
+          ${isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'}
         </button>
-        <button class="mw-ctrl-btn" onclick="skipSong()" ${!currentSong ? 'disabled' : ''}>⏭</button>
-        <button class="mw-ctrl-btn ${localRepeat ? '' : 'repeat-off'}" onclick="toggleRepeat()" title="Repeat one">🔁</button>
+        <button class="mw-ctrl-btn" onclick="skipSong()" ${!currentSong ? 'disabled' : ''}><i class="fa-solid fa-forward-step"></i></button>
+        <button class="mw-ctrl-btn ${localRepeat ? '' : 'repeat-off'}" onclick="toggleRepeat()" title="Repeat one"><i class="fa-solid fa-repeat"></i></button>
       </div>
 
       <div class="mw-progress">
@@ -920,10 +925,10 @@ function renderMusicWidget() {
             : queue.map((song, i) => `
                 <div class="mw-queue-item ${song.id === (musicState && musicState.current_id) ? 'active' : ''}">
                   ${song.id === (musicState && musicState.current_id)
-                    ? `<span class="mw-q-icon">▶</span>`
+                    ? `<span class="mw-q-icon"><i class="fa-solid fa-play"></i></span>`
                     : `<span class="mw-q-num">${i + 1}</span>`}
                   <span class="mw-q-title" title="${escHtml(song.title)}">${escHtml(song.title)}</span>
-                  <button class="mw-q-del" onclick="removeSong('${song.id}')">✕</button>
+                  <button class="mw-q-del" onclick="removeSong('${song.id}')"><i class="fa-solid fa-xmark"></i></button>
                 </div>`).join('')}
         </div>
         ${showAddInput ? `
@@ -936,11 +941,11 @@ function renderMusicWidget() {
       </div>
 
       <div class="mw-footer">
-        <span class="mw-vol-icon">🔈</span>
+        <span class="mw-vol-icon"><i class="fa-solid fa-volume-low"></i></span>
         <div class="mw-vol-track" onclick="handleVolumeClick(event, this)" style="cursor:pointer">
-          <div class="mw-vol-fill" style="width:${ytPlayer && ytPlayerReady && ytPlayer.getVolume ? ytPlayer.getVolume() : 70}%"></div>
+          <div class="mw-vol-fill" style="width:${ytPlayer && ytPlayerReady && ytPlayer.getVolume ? ytPlayer.getVolume() : (parseInt(localStorage.getItem('mw-volume')) || 50)}%"></div>
         </div>
-        <span class="mw-vol-icon">🔊</span>
+        <span class="mw-vol-icon"><i class="fa-solid fa-volume-high"></i></span>
       </div>
     </div>`;
 }

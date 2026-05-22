@@ -6,6 +6,7 @@
   <title>Us Memory ♡</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +14,7 @@
   <!-- Delete confirmation modal -->
   <div id="confirm-modal" class="confirm-modal" style="display:none">
     <div class="confirm-box">
-      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-icon"><i class="fa-solid fa-trash"></i></div>
       <p class="confirm-message" id="confirm-message">Delete this photo/video?</p>
       <div class="confirm-actions">
         <button class="btn btn-ghost" id="confirm-no">Cancel</button>
@@ -23,10 +24,10 @@
   </div>
 
   <div id="lightbox" class="lightbox hidden">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <button class="lightbox-prev" onclick="lightboxNav(-1)">‹</button>
+    <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="lightbox-prev" onclick="lightboxNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
     <div class="lightbox-content" id="lightbox-content"></div>
-    <button class="lightbox-next" onclick="lightboxNav(1)">›</button>
+    <button class="lightbox-next" onclick="lightboxNav(1)"><i class="fa-solid fa-chevron-right"></i></button>
   </div>
   <script src="app.js"></script>
 
