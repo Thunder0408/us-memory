@@ -693,7 +693,7 @@ function showUploadProgress(id, percent, label) {
 function showUploadStatus(id, type, msg) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg;
+  el.innerHTML = msg;
   el.className = `upload-status ${type}`;
   el.style.display = 'block';
   if (type === 'success') setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
